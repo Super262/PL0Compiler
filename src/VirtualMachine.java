@@ -1,4 +1,5 @@
 import java.io.*;
+import java.util.Scanner;
 
 public class VirtualMachine {
 
@@ -6,7 +7,7 @@ public class VirtualMachine {
     private int SP = 0, BP = 1, PC = 0, IR = 0;
     private final int[] stack;
     private final Instruction[] instructionArray;
-    private final String opCodes[] = {"ILLEGAL", "lit", "opr", "lod", "sto", "cal", "int", "jmp", "jpc"};
+    private final String[] opCodes = {"ILLEGAL", "lit", "opr", "lod", "sto", "cal", "int", "jmp", "jpc", "sio", "sio"};
 
     public VirtualMachine(String input, String output){
         this.input = new File(input);
@@ -19,13 +20,13 @@ public class VirtualMachine {
 
     public void runVirtualMachine() throws IOException {
         StringBuilder stringBuilder = new StringBuilder();
-        FileReader fileReader = fileReader = new FileReader(input);
+        FileReader fileReader = new FileReader(input);
         BufferedReader bufferedReader = new BufferedReader(fileReader);
 
         // Scans in the instructions line by line until end of file.
         // The Line, OP (by name not number), L, and M.
         stringBuilder.append("Line\tOP\t\tL\tM\n");
-        String lineValue = null;
+        String lineValue;
         int lineIndex = 0;
         while((lineValue = bufferedReader.readLine()) != null){
             String[] instructEles = lineValue.split(" ");
@@ -152,6 +153,20 @@ public class VirtualMachine {
                     PC = instruction.getM();
                 }
                 SP = SP - 1;
+                break;
+            }
+
+            case 9: { // SIO1
+                System.out.println(stack[SP]);
+                SP = SP - 1;
+                break;
+            }
+
+            case 10: { // SIO2
+                SP = SP + 1;
+                Scanner scanner = new Scanner(System.in);
+                stack[SP] = scanner.nextInt();
+                scanner.close();
                 break;
             }
 

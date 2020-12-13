@@ -13,8 +13,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 
-import static Property.TokenType.*;
-
 public class CodeGenerator {
     private final ArrayList<Token> lexList;
     private final File outputFile;
@@ -22,7 +20,6 @@ public class CodeGenerator {
     //Global temporary variables defined for all functions
     private int codeIndex;
     private int numOfSymbol;
-    private int kindOfSymbol;
     private int lexemeListIndex = 0;
     private int difference;
     private int previousDifference = 0;
@@ -61,90 +58,91 @@ public class CodeGenerator {
 
     private void program(ArrayList<Symbol> table, ArrayList<Instruction> code) {
         tokenType = getNextToken();
-        block(0,0, table, code);
-        if (tokenType != periodsym) {
+        block(0,new MutableInt(0), table, code);
+        if (tokenType != TokenType.periodsym) {
             error(9); //Period expected.
         }
     }
 
-    private void block(int lev, int tx, ArrayList<Symbol> table, ArrayList<Instruction> code) {
+    private void block(int lev, MutableInt tx, ArrayList<Symbol> table, ArrayList<Instruction> code) {
 
         //errors for above max lexi level
         if(lev > Configuration.MAX_LEXI_LEVELS) {
             error(26);
         }
 
-        int dx, tx0;
         // this changes the amount in M for INC calls, so if dx=3; we will only create space for sp,bp,pc, which throws off vm.c,
         // but if dx=4; meaning we will create space for sp,bp,pc,and retrun value, which makes vm.c work properly.
-        dx = 4;
-        tx0 = tx;
-        updateSymbolTableBound(table, tx);
+        final int tx0 = tx.getValue();
+        MutableInt dx = new MutableInt(4);
+
+        updateSymbolTableBound(table, tx0);
+        table.get(tx0).setAddress(codeIndex);
         emit(7,0,0, code); // 7 is JMP for op, 0 is for L and 0 for M
 
         do {
-            if (tokenType == constsym) {
+            if (tokenType == TokenType.constsym) {
                 tokenType = getNextToken();
                 do {
-                    constDeclaration(lev, new MutableInt(tx), new MutableInt(dx), table);
-                    while(tokenType == commasym) {
+                    constDeclaration(lev, tx, dx, table);
+                    while(tokenType == TokenType.commasym) {
                         tokenType = getNextToken();
-                        constDeclaration(lev, new MutableInt(tx), new MutableInt(dx), table);
+                        constDeclaration(lev, tx, dx, table);
                     }
-                    if(tokenType == semicolonsym) {
+                    if(tokenType == TokenType.semicolonsym) {
                         tokenType = getNextToken();
                     }
                     else {
                         error(5); //Semicolon or comma missing.
                     }
-                } while (tokenType == identsym);
+                } while (tokenType == TokenType.identsym);
             }
-            if (tokenType == varsym) {
+            if (tokenType == TokenType.varsym) {
                 tokenType = getNextToken();
                 do {
-                    varDeclaration(lev, new MutableInt(tx), new MutableInt(dx), table);
-                    while (tokenType == commasym) {
+                    varDeclaration(lev, tx, dx, table);
+                    while (tokenType == TokenType.commasym) {
                         tokenType = getNextToken();
-                        varDeclaration(lev, new MutableInt(tx), new MutableInt(dx), table);
+                        varDeclaration(lev, tx, dx, table);
                     }
-                    if(tokenType == semicolonsym) {
+                    if(tokenType == TokenType.semicolonsym) {
                         tokenType = getNextToken();
                     }
                     else {
                         error(5); //Semicolon or comma missing.
                     }
-                } while(tokenType == identsym);
+                } while(tokenType == TokenType.identsym);
             }
-            while(tokenType == procsym) {
+            while(tokenType == TokenType.procsym) {
                 tokenType = getNextToken();
 
                 // get identsym, then store it in symbol table, need to store, kindOfSymbol, level, id, dont care about addr.
 
                 // store symbol in the symbol table to fix it later, you need to go back and fix address.
                 // you don't have enough info to generate code so you need to store it for later
-                if(tokenType == identsym) {
-                    enter(3, new MutableInt(tx), new MutableInt(dx), lev, table); //procedure
+                if(tokenType == TokenType.identsym) {
+                    enter(3, tx, dx, lev, table); //procedure
                     tokenType = getNextToken();
                 }
                 else {
                     error(4); //const, var, procedure must be followed by identifier.
                 }
-                if(tokenType == semicolonsym) {
+                if(tokenType == TokenType.semicolonsym) {
                     tokenType = getNextToken();
                 }
                 else {
                     error(5); //Semicolon or comma missing.
                 }
                 //lev++; call lev in block after incrementing
-                block(lev+1, tx, table, code); //Go to a block one level higher
-                if(tokenType == semicolonsym) {
+                block(lev + 1, tx, table, code); //Go to a block one level higher
+                if(tokenType == TokenType.semicolonsym) {
                     tokenType = getNextToken();
                 }
                 else {
                     error(5); //Semicolon or comma missing.
                 }
             }
-        }while(tokenType == constsym || tokenType == varsym);
+        }while(tokenType == TokenType.constsym || tokenType == TokenType.varsym);
 
         //The tentative jump address is fixed up
         updateInstructionArrayBound(code, table.get(tx0).getAddress());
@@ -155,21 +153,21 @@ public class CodeGenerator {
 
         //inc 0, dx is generated. At run time, the space of dx is secured
 
-        emit(6, 0, dx, code); // 6 is INC for op, 0 is for L, and dx is M
-        statement(lev, new MutableInt(tx), code, table);
+        emit(6, 0, dx.getValue(), code); // 6 is INC for op, 0 is for L, and dx is M
+        statement(lev, tx, code, table);
         emit(2, 0, 0, code); // 2 is OPR for op, 0 is RET for M inside OPR
     }
 
     private void constDeclaration(int lev, MutableInt ptx, MutableInt pdx, ArrayList<Symbol> table) {
 
-        if (tokenType == identsym) {
+        if (tokenType == TokenType.identsym) {
             tokenType = getNextToken();
-            if ((tokenType == eqsym) || (tokenType == becomessym)) {
-                if (tokenType == becomessym) {
+            if ((tokenType == TokenType.eqsym) || (tokenType == TokenType.becomessym)) {
+                if (tokenType == TokenType.becomessym) {
                     error(1); // Use = instead of :=
                 }
                 tokenType = getNextToken();
-                if (tokenType == numbersym) {
+                if (tokenType == TokenType.numbersym) {
                     enter(1,ptx,pdx,lev, table); // const
                     tokenType = getNextToken();
                 }
@@ -179,7 +177,7 @@ public class CodeGenerator {
 
     private void varDeclaration(int lev, MutableInt ptx, MutableInt pdx, ArrayList<Symbol> table) {
 
-        if (tokenType == identsym) {
+        if (tokenType == TokenType.identsym) {
             enter(2,ptx,pdx,lev, table); // var
             tokenType = getNextToken();
         }
@@ -190,8 +188,8 @@ public class CodeGenerator {
 
         int i, cx1, cx2;
 
-        if (tokenType == identsym){
-            i = position(id,ptx.getValue(), table, lev);
+        if (tokenType == TokenType.identsym){
+            i = position(id, ptx.getValue(), table, lev);
             if(i == 0) {
                 error(11); //Undeclared identifier.
             }
@@ -200,7 +198,7 @@ public class CodeGenerator {
                 i = 0;
             }
             tokenType = getNextToken();
-            if (tokenType == becomessym) {
+            if (tokenType == TokenType.becomessym) {
                 tokenType = getNextToken();
             }
             else {
@@ -212,9 +210,9 @@ public class CodeGenerator {
                 emit(4, lev - table.get(i).getLevel(), table.get(i).getAddress(), code);
             }
         }
-        else if (tokenType == callsym) {
+        else if (tokenType == TokenType.callsym) {
             tokenType = getNextToken();
-            if (tokenType != identsym) {
+            if (tokenType != TokenType.identsym) {
                 error(14); //call must be followed by an identifier
             }
             else {
@@ -235,10 +233,10 @@ public class CodeGenerator {
         }
 
         //if <condition> then <statement>
-        else if (tokenType == ifsym) {
+        else if (tokenType == TokenType.ifsym) {
             tokenType = getNextToken();
             condition(lev, ptx, code, table);
-            if(tokenType == thensym) {
+            if(tokenType == TokenType.thensym) {
                 tokenType = getNextToken();
             }
             else {
@@ -249,7 +247,7 @@ public class CodeGenerator {
             emit(8, 0, 0, code); // 8 is JPC for op, 0 is for L and 0 for M
             statement(lev, ptx, code, table);
 
-            if(tokenType == elsesym) {
+            if(tokenType == TokenType.elsesym) {
                 tokenType = getNextToken();
                 updateInstructionArrayBound(code, cx1);
                 code.get(cx1).setM(codeIndex + 1); //jumps past if
@@ -264,16 +262,16 @@ public class CodeGenerator {
         }
 
         //begin <condition> end <statement>
-        else if (tokenType == beginsym) {
+        else if (tokenType == TokenType.beginsym) {
             tokenType = getNextToken();
             statement(lev, ptx, code, table);
 
-            while (tokenType == semicolonsym) {
+            while (tokenType == TokenType.semicolonsym) {
                 tokenType = getNextToken();
                 statement(lev, ptx, code, table);
             }
 
-            if (tokenType == endsym) {
+            if (tokenType == TokenType.endsym) {
                 tokenType = getNextToken();
             }
             else {
@@ -282,13 +280,13 @@ public class CodeGenerator {
         }
 
         //while <condition> do <statement>
-        else if (tokenType == whilesym) {
+        else if (tokenType == TokenType.whilesym) {
             cx1 =codeIndex;
             tokenType = getNextToken();
             condition(lev,ptx, code, table);
             cx2 = codeIndex;
             emit(8, 0, 0, code); // 8 is JPC for op, 0 is for L and 0 for M
-            if(tokenType == dosym) {
+            if(tokenType == TokenType.dosym) {
                 tokenType = getNextToken();
             }
             else {
@@ -301,14 +299,14 @@ public class CodeGenerator {
         }
 
         //write needs to write
-        else if (tokenType == writesym) {
+        else if (tokenType == TokenType.writesym) {
             tokenType = getNextToken();
             expression(lev, ptx, code, table);
             emit(9,0,1, code); // 9 is SIO1 for op, 0 is for L and 1 for M, write the top stack element to the screen
         }
 
         //read needs to read and STO
-        else if (tokenType == readsym) {
+        else if (tokenType == TokenType.readsym) {
             tokenType = getNextToken();
             emit(10,0,2, code); // 10 is SIO2 for op, 0 is for L and 1 for M, write the top stack element to the screen
             i = position(id,ptx.getValue(), table, lev);
@@ -331,7 +329,7 @@ public class CodeGenerator {
 
         TokenType relationSwitch;
 
-        if (tokenType == oddsym) {
+        if (tokenType == TokenType.oddsym) {
             tokenType = getNextToken();
             expression(lev,ptx, code, table);
             emit(2, 0, 6, code); // 2 is OPR for op, 6 is ODD for M inside OPR
@@ -339,8 +337,8 @@ public class CodeGenerator {
         }
         else {
             expression(lev,ptx, code, table);
-            if ((tokenType != eqsym) && (tokenType != neqsym) && (tokenType != lessym) &&
-                    (tokenType != leqsym) && (tokenType != gtrsym) && (tokenType != geqsym)) {
+            if ((tokenType != TokenType.eqsym) && (tokenType != TokenType.neqsym) && (tokenType != TokenType.lessym) &&
+                    (tokenType != TokenType.leqsym) && (tokenType != TokenType.gtrsym) && (tokenType != TokenType.geqsym)) {
                 error(20); //Relational operator expected.
             }
             else { //for relational operators
@@ -374,22 +372,22 @@ public class CodeGenerator {
     private void expression(int lev, MutableInt ptx, ArrayList<Instruction> code, ArrayList<Symbol> table) {
 
         TokenType addop;
-        if (tokenType == plussym || tokenType == minussym) {
+        if (tokenType == TokenType.plussym || tokenType == TokenType.minussym) {
             addop = tokenType;
             tokenType = getNextToken();
             term(lev, ptx, code, table);
-            if(addop == minussym) {
+            if(addop == TokenType.minussym) {
                 emit(2, 0, 1, code); // 2 is OPR for op, 1 is NEG for M inside OPR
             }
         }
         else {
             term (lev, ptx, code, table);
         }
-        while (tokenType == plussym || tokenType == minussym) {
+        while (tokenType == TokenType.plussym || tokenType == TokenType.minussym) {
             addop = tokenType;
             tokenType = getNextToken();
             term(lev, ptx, code, table);
-            if (addop == plussym) {
+            if (addop == TokenType.plussym) {
                 emit(2, 0, 2, code); // 2 is OPR for op, 2 is ADD for M inside OPR
             }
             else {
@@ -401,11 +399,11 @@ public class CodeGenerator {
     private void term(int lev, MutableInt ptx, ArrayList<Instruction> code, ArrayList<Symbol> table) {
         TokenType mulop;
         factor(lev, ptx, table, code);
-        while(tokenType == multsym || tokenType == slashsym) {
+        while(tokenType == TokenType.multsym || tokenType == TokenType.slashsym) {
             mulop = tokenType;
             tokenType = getNextToken();
             factor(lev, ptx, table, code);
-            if(mulop == multsym) {
+            if(mulop == TokenType.multsym) {
                 emit(2, 0, 4, code); // 2 is OPR for op, 4 is MUL for M inside OPR
             }
             else {
@@ -418,14 +416,14 @@ public class CodeGenerator {
 
         int i, level, adr, val;
 
-        while ((tokenType == identsym) || (tokenType == numbersym) || (tokenType == lparentsym)){
-            if (tokenType == identsym) {
+        while ((tokenType == TokenType.identsym) || (tokenType == TokenType.numbersym) || (tokenType == TokenType.lparentsym)){
+            if (tokenType == TokenType.identsym) {
                 i = position(id, ptx.getValue(), table, lev);
                 if (i == 0) {
                     error(11); // undeclared identifier
                 }
                 else {
-                    kindOfSymbol = table.get(i).getKind();
+                    final int kindOfSymbol = table.get(i).getKind();
                     level = table.get(i).getLevel();
                     adr = table.get(i).getAddress();
                     val = table.get(i).getValue();
@@ -444,7 +442,7 @@ public class CodeGenerator {
                 tokenType = getNextToken();
             }
             /*this might need to be changed*/
-            else if(tokenType == numbersym) {
+            else if(tokenType == TokenType.numbersym) {
                 if (numOfSymbol > Configuration.MAX_ADDRESS) { //maximum address
                     error(25);
                     numOfSymbol = 0;
@@ -455,7 +453,7 @@ public class CodeGenerator {
             else {
                 tokenType = getNextToken();
                 expression(lev,ptx, code, table);
-                if (tokenType == rparentsym) {
+                if (tokenType == TokenType.rparentsym) {
                     tokenType = getNextToken();
                 }
                 else {
@@ -621,10 +619,10 @@ public class CodeGenerator {
 
         this.tokenType = this.lexList.get(this.lexemeListIndex).getSym();
 
-        if(this.tokenType == identsym){
+        if(this.tokenType == TokenType.identsym){
             this.id = this.lexList.get(this.lexemeListIndex).getId();
         }
-        else if(this.tokenType == numbersym){
+        else if(this.tokenType == TokenType.numbersym){
             this.numOfSymbol = this.lexList.get(this.lexemeListIndex).getNum();
         }
 

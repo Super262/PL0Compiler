@@ -7,19 +7,23 @@ import java.util.Scanner;
 
 public class VirtualMachine {
 
+    private final Scanner scanner;
     private final File inputFile, outputFile;
-    private int SP = 0, BP = 1, PC = 0, IR = 0;
+    private int SP = 0;
+    private int BP = 1;
+    private int PC = 0;
     private final int[] stack;
     private final Instruction[] instructionArray;
     private final String[] opCodes = {"ILLEGAL", "lit", "opr", "lod", "sto", "cal", "int", "jmp", "jpc", "sio", "sio"};
 
-    public VirtualMachine(String inputPath, String outputPath){
+    public VirtualMachine(String inputPath, String outputPath, Scanner scanner){
+        this.scanner = scanner;
         this.inputFile = new File(inputPath);
         this.outputFile = new File(outputPath);
-        stack = new int[Property.Configuration.MAX_STACK_HEIGHT];
+        this.stack = new int[Property.Configuration.MAX_STACK_HEIGHT];
 
         // codeArray is a filled array of instructions, containing the op, l, and m.
-        instructionArray = new Instruction[Property.Configuration.MAX_CODE_SIZE];
+        this.instructionArray = new Instruction[Property.Configuration.MAX_CODE_SIZE];
     }
 
     public void startVM() throws IOException {
@@ -64,7 +68,6 @@ public class VirtualMachine {
             printStackFrame(SP, BP, stringBuilder);
             stringBuilder.append("\n");
         }
-
         BufferedWriter bw = new BufferedWriter(new FileWriter(outputFile));
         bw.write(stringBuilder.toString());
         bw.close();
@@ -74,7 +77,6 @@ public class VirtualMachine {
     private void printStackFrame(final int SP, final int BP, StringBuilder stringBuilder) {
         if (BP == 0) {
             // Base Case #1: if BP is 0, the program has finished. No stack frames are left to print out
-            return;
         }
         else if (BP == 1) {
             // Base Case #2: if BP is 1, then it is in the main stack frame, and we print out the stack from BP to SP, with BP pointing to the bottom of the main stack frame, and SP pointing to the top of the stack
@@ -168,9 +170,9 @@ public class VirtualMachine {
 
             case 10: { // SIO2
                 SP = SP + 1;
-                Scanner scanner = new Scanner(System.in);
-                stack[SP] = scanner.nextInt();
-                scanner.close();
+                System.out.println();
+                System.out.print("Virtual Machine >: ");
+                stack[SP] = this.scanner.nextInt();
                 break;
             }
 

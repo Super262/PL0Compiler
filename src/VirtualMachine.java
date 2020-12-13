@@ -3,15 +3,15 @@ import java.util.Scanner;
 
 public class VirtualMachine {
 
-    private final File input, output;
+    private final File inputFile, outputFile;
     private int SP = 0, BP = 1, PC = 0, IR = 0;
     private final int[] stack;
     private final Instruction[] instructionArray;
     private final String[] opCodes = {"ILLEGAL", "lit", "opr", "lod", "sto", "cal", "int", "jmp", "jpc", "sio", "sio"};
 
-    public VirtualMachine(String input, String output){
-        this.input = new File(input);
-        this.output = new File(output);
+    public VirtualMachine(String inputFile,String outputFile){
+        this.inputFile = new File(inputFile);
+        this.outputFile = new File(outputFile);
         stack = new int[Config.MAX_STACK_HEIGHT];
 
         // codeArray is a filled array of instructions, containing the op, l, and m.
@@ -20,7 +20,7 @@ public class VirtualMachine {
 
     public void runVirtualMachine() throws IOException {
         StringBuilder stringBuilder = new StringBuilder();
-        FileReader fileReader = new FileReader(input);
+        FileReader fileReader = new FileReader(inputFile);
         BufferedReader bufferedReader = new BufferedReader(fileReader);
 
         // Scans in the instructions line by line until end of file.
@@ -61,7 +61,7 @@ public class VirtualMachine {
             stringBuilder.append("\n");
         }
 
-        BufferedWriter bw = new BufferedWriter(new FileWriter(output));
+        BufferedWriter bw = new BufferedWriter(new FileWriter(outputFile));
         bw.write(stringBuilder.toString());
         bw.close();
     }

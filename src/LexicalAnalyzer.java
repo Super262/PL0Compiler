@@ -75,7 +75,7 @@ public class LexicalAnalyzer {
                 //Compares the variable id to see if it is one of the reserved words
                 int reservedSwitch = -1;
 
-                for(int i = 0; i < 14; ++i){
+                for(int i = 0; i < Config.reservedWords.length; ++i){
                     if(Config.reservedWords[i].equals(characterString.toString())){
                         reservedSwitch=i;
                         break;
@@ -210,7 +210,7 @@ public class LexicalAnalyzer {
             else {
                 lookAhead = 0;
                 int spec = -1;
-                for(int i = 0; i < 13; ++i){
+                for(int i = 0; i < Config.specialSymbols.length; ++i){
                     if(((char) c) == Config.specialSymbols[i]){
                         spec = i;
                     }
@@ -303,19 +303,15 @@ public class LexicalAnalyzer {
                         break;
                     }
 
-                    //Case for <>
+                    //Case for <
                     case 9: {
                         c = fileReader.read();
                         lookAhead = 1;
-                        if(c == '>'){
-                            lexList.get(lexListIndex).setSym(TokenType.neqsym);
-                            lookAhead = 0;
-                        }
 
                         //Case for <=
-                        else if(c=='='){
+                        if(c=='='){
                             lexList.get(lexListIndex).setSym(TokenType.leqsym);
-                            lookAhead=0;
+                            lookAhead = 0;
                         }
 
                         //Case for <
@@ -359,6 +355,13 @@ public class LexicalAnalyzer {
                             lexList.get(lexListIndex).setSym(TokenType.becomessym);
                             lexListIndex++;
                         }
+                        break;
+                    }
+
+                    //Case for #
+                    case 13: {
+                        lexList.get(lexListIndex).setSym(TokenType.neqsym);
+                        lexListIndex++;
                         break;
                     }
 

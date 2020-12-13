@@ -22,7 +22,7 @@ public class VirtualMachine {
         instructionArray = new Instruction[Property.Configuration.MAX_CODE_SIZE];
     }
 
-    public void runVirtualMachine() throws IOException {
+    public void startVM() throws IOException {
         StringBuilder stringBuilder = new StringBuilder();
         FileReader fileReader = new FileReader(inputFile);
         BufferedReader bufferedReader = new BufferedReader(fileReader);

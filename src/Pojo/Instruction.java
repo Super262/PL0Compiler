@@ -1,3 +1,5 @@
+package Pojo;
+
 public class Instruction {
     private final int opCode, level, m;
 

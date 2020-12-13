@@ -1,3 +1,6 @@
+import Core.LexicalAnalyzer;
+import Pojo.Token;
+
 import java.io.IOException;
 import java.util.ArrayList;
 

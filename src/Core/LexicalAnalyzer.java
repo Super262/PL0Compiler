@@ -1,3 +1,8 @@
+package Core;
+
+import Pojo.Token;
+import Property.TokenType;
+
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -53,7 +58,7 @@ public class LexicalAnalyzer {
                                 Character.isUpperCase((char) c) ||
                                 Character.isDigit((char) c)
                 )){
-                    if(index > Config.MAX_ID_LENGTH - 1){
+                    if(index > Property.Configuration.MAX_ID_LENGTH - 1){
                         while ((c = fileReader.read()) != -1 &&(
                                 Character.isLowerCase((char) c) ||
                                 Character.isUpperCase((char) c) ||
@@ -75,8 +80,8 @@ public class LexicalAnalyzer {
                 //Compares the variable id to see if it is one of the reserved words
                 int reservedSwitch = -1;
 
-                for(int i = 0; i < Config.reservedWords.length; ++i){
-                    if(Config.reservedWords[i].equals(characterString.toString())){
+                for(int i = 0; i < Property.Configuration.reservedWords.length; ++i){
+                    if(Property.Configuration.reservedWords[i].equals(characterString.toString())){
                         reservedSwitch=i;
                         break;
                     }
@@ -173,7 +178,7 @@ public class LexicalAnalyzer {
 
                 while((c = fileReader.read()) != -1 && Character.isDigit((char) c)){
                     //Error checking: if the number is too long
-                    if(place > Config.MAX_NUM_LENGTH - 1){
+                    if(place > Property.Configuration.MAX_NUM_LENGTH - 1){
                         while ((c = fileReader.read()) != -1 && Character.isDigit((char) c)) {}
                         errorHolder = 1;
                         break;
@@ -210,8 +215,8 @@ public class LexicalAnalyzer {
             else {
                 lookAhead = 0;
                 int spec = -1;
-                for(int i = 0; i < Config.specialSymbols.length; ++i){
-                    if(((char) c) == Config.specialSymbols[i]){
+                for(int i = 0; i < Property.Configuration.specialSymbols.length; ++i){
+                    if(((char) c) == Property.Configuration.specialSymbols[i]){
                         spec = i;
                     }
                 }

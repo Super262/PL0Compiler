@@ -1,3 +1,7 @@
+package Pojo;
+
+import Property.TokenType;
+
 public class Token {
     private TokenType sym;
     private int num;

@@ -1,3 +1,5 @@
+package Property;
+
 public enum TokenType {
     nulsym,
     identsym,

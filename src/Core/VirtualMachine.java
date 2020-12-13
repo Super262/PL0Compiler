@@ -1,3 +1,7 @@
+package Core;
+
+import Pojo.Instruction;
+
 import java.io.*;
 import java.util.Scanner;
 
@@ -12,10 +16,10 @@ public class VirtualMachine {
     public VirtualMachine(String inputFile,String outputFile){
         this.inputFile = new File(inputFile);
         this.outputFile = new File(outputFile);
-        stack = new int[Config.MAX_STACK_HEIGHT];
+        stack = new int[Property.Configuration.MAX_STACK_HEIGHT];
 
         // codeArray is a filled array of instructions, containing the op, l, and m.
-        instructionArray = new Instruction[Config.MAX_CODE_SIZE];
+        instructionArray = new Instruction[Property.Configuration.MAX_CODE_SIZE];
     }
 
     public void runVirtualMachine() throws IOException {
@@ -176,7 +180,7 @@ public class VirtualMachine {
         }
     }
 
-    //OPR: also a switch, determined by the OP's M, passed through Instruction.
+    //OPR: also a switch, determined by the OP's M, passed through Pojo.Instruction.
     private void OPR (Instruction instruction){
         switch(instruction.getM()){
 

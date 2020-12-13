@@ -1,19 +1,32 @@
 package Pojo;
 
 public class Instruction {
-    private final int opCode, level, m;
-
-    public Instruction(){
-        this.opCode = -1;
-        this.level = -1;
-        this.m = -1;
-    }
 
     public Instruction(int opCode, int level, int m){
         this.opCode = opCode;
         this.level = level;
         this.m = m;
     }
+
+    public Instruction(){
+        opCode = -1;
+        level = -1;
+        m = -1;
+    }
+
+    public void setOpCode(int opCode) {
+        this.opCode = opCode;
+    }
+
+    public void setLevel(int level) {
+        this.level = level;
+    }
+
+    public void setM(int m) {
+        this.m = m;
+    }
+
+    private int opCode, level, m;
 
     public int getOpCode() {
         return opCode;

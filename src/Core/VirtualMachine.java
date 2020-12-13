@@ -13,9 +13,9 @@ public class VirtualMachine {
     private final Instruction[] instructionArray;
     private final String[] opCodes = {"ILLEGAL", "lit", "opr", "lod", "sto", "cal", "int", "jmp", "jpc", "sio", "sio"};
 
-    public VirtualMachine(String inputFile,String outputFile){
-        this.inputFile = new File(inputFile);
-        this.outputFile = new File(outputFile);
+    public VirtualMachine(String inputPath, String outputPath){
+        this.inputFile = new File(inputPath);
+        this.outputFile = new File(outputPath);
         stack = new int[Property.Configuration.MAX_STACK_HEIGHT];
 
         // codeArray is a filled array of instructions, containing the op, l, and m.

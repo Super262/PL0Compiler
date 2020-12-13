@@ -11,8 +11,8 @@ public class LexicalAnalyzer {
     private final String inputFile;
     private final ArrayList<Token> lexList;
 
-    public LexicalAnalyzer(String inputFile) {
-        this.inputFile = inputFile;
+    public LexicalAnalyzer(String inputPath) {
+        this.inputFile = inputPath;
         this.lexList = new ArrayList<>();
     }
 
@@ -88,7 +88,7 @@ public class LexicalAnalyzer {
                 }
 
                 // If it is a reserved word, print out the correct tokenType
-                checkLexListBound(lexListIndex);
+                updateLexListBound(lexListIndex);
                 switch(reservedSwitch){
 
                     //Case for const
@@ -205,7 +205,7 @@ public class LexicalAnalyzer {
                     continue;
                 }
 
-                checkLexListBound(lexListIndex);
+                updateLexListBound(lexListIndex);
                 lexList.get(lexListIndex).setSym(TokenType.numbersym);
                 lexList.get(lexListIndex).setNum(number);
                 lexListIndex++;
@@ -222,7 +222,7 @@ public class LexicalAnalyzer {
                 }
 
                 //If it is a special symbol, print out the correct token type
-                checkLexListBound(lexListIndex);
+                updateLexListBound(lexListIndex);
                 switch(spec){
 
                     //Case for +
@@ -383,7 +383,7 @@ public class LexicalAnalyzer {
         return lexList;
     }
 
-    private void checkLexListBound(int lexListIndex){
+    private void updateLexListBound(int lexListIndex){
         while(this.lexList.size() <= lexListIndex){
             this.lexList.add(new Token());
         }

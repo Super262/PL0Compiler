@@ -4,8 +4,8 @@ public class Token {
     private String id;   // Max Length = 10
 
     public Token(){
-        this.sym = TokenType.none;
-        id = "";
+        this.sym = TokenType.unknown;
+        id = null;
         num = 0;
     }
 
